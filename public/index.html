@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>파일 복구 요청</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="left-section">
+      <div class="header">
+        <span class="logo">Foremost</span>
+        <button id="cautionBtn" class="caution-btn">?</button>
+      </div>
+      <div class="content">
+        <h2>파일 복구 서비스<br>
+          Foremost를 통해<br>
+          신속하고 빠른 복구를 경험하세요
+        </h2>
+        <p>Foremost는 데이터 구조를 기반으로 <br>
+          손실 된 파일을 복구하기 위한 카빙(Carving) 툴 프로그램 입니다.
+        </p>
+        <form id="recoveryForm" method="post" enctype="multipart/form-data">
+          <div class="file-input-wrapper">
+            <input type="file" id="fileInput" name="file" required>
+          </div>
+          <button type="submit">복구 시작</button>
+        </form>
+      </div>
+    </div>
+    <div class="right-section">
+      <img src="/css/image.jpeg" alt="Your Image">
+    </div>
+  </div>
+
+  <div id="cautionModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>주의사항</h2>
+      <ul>
+        <li>파일이름에 띄어쓰기 또는 한글이 들어갈시 작동하지 않습니다</li>
+        <li>복구 성공 여부는 파일 손상 정도에 따라 달라집니다</li>
+        <li>대부분의 파일 형식을 지원하나 jsp등과 같이 지원하지 않는 파일 형식이 존재합니다</li>
+    </ul>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      document.getElementById('fileInput').value = ''; // 페이지 로드 시 파일 입력 필드 초기화
+      document.getElementById('recoveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+          alert('복구할 파일을 선택해주세요.');
+          return;
+        }
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        fetch('/recover', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          window.location.href = `/download.html?folder=${encodeURIComponent(data.folderName)}`;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          const message = document.getElementById('message');
+          message.textContent = '복구 요청 중 오류가 발생했습니다.';
+        });
+      });
+
+      const cautionBtn = document.getElementById('cautionBtn');
+      const cautionModal = document.getElementById('cautionModal');
+      const closeBtn = document.querySelector('.close');
+
+      cautionBtn.onclick = function() {
+        cautionModal.style.display = 'block';
+      };
+
+      closeBtn.onclick = function() {
+        cautionModal.style.display = 'none';
+      };
+
+      window.onclick = function(event) {
+        if (event.target == cautionModal) {
+          cautionModal.style.display = 'none';
+        }
+      };
+    };
+    
+    window.onbeforeunload = function() {
+      document.getElementById('fileInput').value = ''; // 페이지를 떠날 때 파일 입력 필드 초기화
+    };
+  </script>
+</body>
+</html>

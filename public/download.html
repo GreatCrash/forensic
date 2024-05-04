@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>파일 다운로드</title>
+  <link rel="stylesheet" href="/css/download-styles.css">
+</head>
+<body>
+  <h2>파일 다운로드</h2>
+  <button id="downloadBtn">다운로드</button>
+  <button id="backBtn">뒤로가기</button>
+  <script>
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const folder = urlParams.get('folder');
+      const downloadBtn = document.getElementById('downloadBtn');
+      downloadBtn.addEventListener('click', () => {
+        downloadFiles(folder);
+      });
+
+      const backBtn = document.getElementById('backBtn');
+      backBtn.addEventListener('click', () => {
+        window.location.href = '/';
+      });
+    };
+
+    window.onbeforeunload = function() {
+      // 페이지를 떠날 때 실행되는 코드
+      // 여기서 필요한 초기화 작업을 수행할 수 있습니다.
+      // 예를 들어, 세션 스토리지나 로컬 스토리지에 저장된 데이터를 삭제할 수 있습니다.
+      sessionStorage.clear();
+      localStorage.clear();
+    };
+
+    function downloadFiles(folder) {
+      const url = `/download-files?folder=${encodeURIComponent(folder)}`;
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
