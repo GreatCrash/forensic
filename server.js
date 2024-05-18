@@ -7,7 +7,7 @@ const archiver = require('archiver');
 const multer = require('multer');
 
 const app = express();
-const port = 3000;
+const port = 3000; // HTTP의 기본 포트
 
 app.use(cors());
 app.use(express.json());
@@ -26,16 +26,13 @@ app.post('/recover', upload.single('file'), async (req, res) => {
   const tempFilePath = path.join(tempFolderPath, file.originalname);
 
   try {
-    // temp 폴더 내부의 기존 파일 삭제
     const tempFiles = await fs.readdir(tempFolderPath);
     await Promise.all(tempFiles.map(file => fs.unlink(path.join(tempFolderPath, file))));
 
-    // 새로 업로드한 파일 저장
     await fs.writeFile(tempFilePath, file.buffer);
 
     const outputPath = path.join(__dirname, 'output');
 
-    // output 폴더 내부의 기존 파일 및 폴더 삭제
     const outputFiles = await fs.readdir(outputPath);
     await Promise.all(outputFiles.map(async (file) => {
       const filePath = path.join(outputPath, file);
@@ -48,7 +45,6 @@ app.post('/recover', upload.single('file'), async (req, res) => {
     }));
 
     const cmd = `foremost -i ${tempFilePath} -o ${outputPath}`;
-
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
         console.error(`exec error: ${error}`);
@@ -58,11 +54,7 @@ app.post('/recover', upload.single('file'), async (req, res) => {
       console.log(`stdout: ${stdout}`);
       console.error(`stderr: ${stderr}`);
 
-      fs.unlink(tempFilePath, (err) => {
-        if (err) {
-          console.error('Failed to delete temporary file:', err);
-        }
-      });
+      fs.unlink(tempFilePath);
 
       const recoveredFolderName = "recoveredFolderName";
       res.json({ folderName: recoveredFolderName, recoveredFiles: [] });
@@ -71,40 +63,6 @@ app.post('/recover', upload.single('file'), async (req, res) => {
     console.error('Failed to process files:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
-});
-
-app.get('/check-recovery', (req, res) => {
-  const folder = req.query.folder;
-  const recoveryPath = path.join(__dirname, 'output', folder);
-
-  fs.readdir(recoveryPath, (err, files) => {
-    if (err) {
-      console.error('Error reading recovery folder:', err);
-      return res.status(500).json({ error: 'Failed to read recovery folder', recoveredFiles: [] });
-    }
-
-    const recoveredFiles = files.filter(file => file !== 'audit.txt');
-
-    if (recoveredFiles.length === 0) {
-      fs.readdir(recoveryPath, { withFileTypes: true }, (err, entries) => {
-        if (err) {
-          console.error('Error reading recovery folder:', err);
-          return res.status(500).json({ error: 'Failed to read recovery folder', recoveredFiles: [] });
-        }
-
-        const recoveredFolders = entries.filter(entry => entry.isDirectory() && entry.name !== 'audit.txt');
-
-        if (recoveredFolders.length > 0) {
-          const folderNames = recoveredFolders.map(folder => folder.name);
-          return res.json({ recoveredFiles: folderNames });
-        } else {
-          return res.json({ recoveredFiles: [] });
-        }
-      });
-    } else {
-      return res.json({ recoveredFiles });
-    }
-  });
 });
 
 app.get('/download-files', (req, res) => {
@@ -138,5 +96,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
+  console.log(`HTTP Server running on port ${port}`);
 });
